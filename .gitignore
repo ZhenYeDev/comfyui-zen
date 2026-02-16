@@ -1,0 +1,6 @@
+.vend/
+venv/
+env/
+ENV/
+.python-version
+
