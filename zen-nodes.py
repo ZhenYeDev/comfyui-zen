@@ -1,3 +1,4 @@
+# 你的原有 ZenTextMerge 类代码（不变）
 class ZenTextMerge:
     def __init__(self):
         pass
@@ -25,3 +26,11 @@ class ZenTextMerge:
         print(f"[comfyui-zen] Merging texts. Length A: {len(text_a)}, Length B: {len(text_b)}")
         
         return (combined_result,)
+
+NODE_CLASS_MAPPINGS = {
+    "ZenTextMerge": ZenTextMerge 
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ZenTextMerge": "Zen Text Merge"
+}
