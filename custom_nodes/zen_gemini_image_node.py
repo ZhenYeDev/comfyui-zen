@@ -1,4 +1,4 @@
-from nodes import IO  # (ComfyUI 运行时可能未使用)
+# from nodes import IO  # (ComfyUI 运行时可能未使用)
 import traceback
 from io import BytesIO
 from PIL import Image
@@ -10,7 +10,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig, Modality, Part
 
 
-class GeminiImageEditNode:
+class ZenGeminiImageNode:
     """
     ComfyUI 节点：将输入图像（可选参考图像）和提示发送给
     Google Gemini 图像生成/编辑模型，并返回结果图像。
@@ -28,7 +28,10 @@ class GeminiImageEditNode:
                 "image": ("IMAGE",),
                 "prompt": ("STRING", {"default": "Edit the image as requested."}),
                 "model_name": ("STRING", {"default": "gemini-3.1-flash-image-preview"}),
-                "api_key": ("STRING", {"default": "AIzaSyBcC0MeDdf0BI32N1BsDZ9nUn0xuew6Dho"}),
+                "api_key": (
+                    "STRING",
+                    {"default": "AIzaSyBcC0MeDdf0BI32N1BsDZ9nUn0xuew6Dho"},
+                ),
             },
             "optional": {
                 "reference_image_1": ("IMAGE", {"forceInput": False}),
@@ -39,7 +42,7 @@ class GeminiImageEditNode:
         }
 
     RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("images",)
+    RETURN_NAMES = ("IMAGE",)
     FUNCTION = "generate"
     CATEGORY = "Google Gemini"
 

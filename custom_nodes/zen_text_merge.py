@@ -1,5 +1,4 @@
 import random
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,6 +41,3 @@ class ZenTextMerge:
         logger.info(f"Merging texts. Length A: {len(text_a)}, Length B: {len(text_b)}")
 
         return (combined_result,)
-
-
-
