@@ -1,9 +1,9 @@
-from .zen_text_merge import ZenTextMerge
+from .zen_text_merge import ZenTextMergeNode
 
 NODE_CLASS_MAPPINGS = {
-    "ZenTextMerge": ZenTextMerge,
+    "ZenTextMergeNode": ZenTextMergeNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ZenTextMerge": "Zen Text Merge",
+    "ZenTextMergeNode": "Zen Text Merge",
 }
