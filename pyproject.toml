@@ -1,0 +1,13 @@
+[project]
+name = "comfyui-zen"
+description = "Node for Zen project."
+version = "0.0.1"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/ZhenYeDev/comfyui-zen"
+
+[tool.comfy]
+PublisherId = "zhenye"
+DisplayName = "ComfyUI-Zen"
+Icon = ""
