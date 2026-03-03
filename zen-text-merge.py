@@ -30,7 +30,7 @@ class ZenTextMerge:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("merged_text",)
     FUNCTION = "merge_texts"
-    CATEGORY = "ZenNodes"
+    CATEGORY = "ZenTextMerge"
 
     def merge_texts(self, text_a, text_b, delimiter, seed):
         parsed_delimiter = bytes(delimiter, "utf-8").decode("unicode_escape")
