@@ -1,43 +1,34 @@
-import random
-import logging
-
-logger = logging.getLogger(__name__)
+from comfy_api.latest import io
 
 
-# 你的原有 ZenTextMerge 类代码（不变）
 class ZenTextMerge:
-    def __init__(self):
-        pass
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def define_schema(cls):
+        autogrow_template = io.Autogrow.TemplatePrefix(
+            io.String.Input("text"),   # 👈 改成 String
+            prefix="text",
+            min=2,
+            max=50
+        )
+
+        return io.Schema(
+            node_id="ZenTextMergeNode",
+            display_name="Zen Text Merge",
+            category="text",
+            inputs=[
+                io.Autogrow.Input("texts", template=autogrow_template),
+            ],
+            outputs=[
+                io.String.Output("merged_text"),  # 👈 输出 string
+            ],
+        )
+
+    @classmethod
+    def execute(cls, texts: io.Autogrow.Type):
+        # texts 是 dict: {"text_1": "...", "text_2": "..."}
+        merged = "\n".join(texts.values())
+
         return {
-            "required": {
-                "text_a": (
-                    "STRING",
-                    {"multiline": True, "default": "First text segment"},
-                ),
-                "text_b": (
-                    "STRING",
-                    {"multiline": True, "default": "Second text segment"},
-                ),
-                "delimiter": ("STRING", {"default": "\n"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF}),
-            },
+            "merged_text": merged
         }
-
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("merged_text",)
-    FUNCTION = "merge_texts"
-    CATEGORY = "ZenTextMerge"
-
-    def merge_texts(self, text_a, text_b, delimiter, seed):
-        parsed_delimiter = bytes(delimiter, "utf-8").decode("unicode_escape")
-        # Join two strings with the specified delimiter
-        combined_result = f"{text_a}{parsed_delimiter}{text_b}"
-        random.seed(seed)
-
-        # Log for debugging purposes
-        logger.info(f"Merging texts. Length A: {len(text_a)}, Length B: {len(text_b)}")
-
-        return (combined_result,)
