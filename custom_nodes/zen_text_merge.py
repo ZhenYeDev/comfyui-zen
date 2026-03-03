@@ -1,4 +1,5 @@
 from comfy_api.latest import io
+import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,7 +10,7 @@ class ZenTextMergeNode(io.ComfyNode):
     def define_schema(cls):
         autogrow_template = io.Autogrow.TemplatePrefix(
             io.String.Input("STRING"),  # Input type
-            prefix="text_",
+            prefix="string_",
             min=2,
             max=50,
         )
@@ -20,15 +21,17 @@ class ZenTextMergeNode(io.ComfyNode):
             category="string",
             inputs=[
                 io.Autogrow.Input("texts", template=autogrow_template),
+                io.Int.Input("seed", display_name="Seed", default=random.random(), min=0, max=0xFFFFFFFF),
             ],
             outputs=[
-                io.String.Output(display_name="merged_text"),
+                io.String.Output(display_name="MERGED_TEXT"),
             ],
         )
 
     @classmethod
-    def execute(cls, texts: io.Autogrow.Type) -> io.String.Output:
+    def execute(cls, texts: io.Autogrow.Type, seed: int) -> io.String.Output:
         logger.info(f"Received texts: {texts}")
+        random.seed(seed)
         # texts behaves like a dict
         keys = list(texts.keys()) 
         merged = "\n".join(texts[key] for key in keys)
