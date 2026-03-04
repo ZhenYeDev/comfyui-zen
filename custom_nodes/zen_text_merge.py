@@ -21,7 +21,7 @@ class ZenTextMergeNode(io.ComfyNode):
             category="string",
             inputs=[
                 io.Autogrow.Input("texts", template=autogrow_template),
-                io.Int.Input("seed", display_name="Seed", default=random.random(), min=0, max=0xFFFFFFFF),
+                io.Int.Input("seed", display_name="Seed", default=random.randint(0, 0xFFFFFFFF), min=0, max=0xFFFFFFFF),
             ],
             outputs=[
                 io.String.Output(display_name="MERGED_TEXT"),
@@ -29,7 +29,7 @@ class ZenTextMergeNode(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, texts: io.Autogrow.Type, seed: int) -> io.String.Output:
+    def execute(cls, texts: io.Autogrow.Type, seed: int):
         logger.info(f"Received texts: {texts}")
         random.seed(seed)
         # texts behaves like a dict
