@@ -7,7 +7,7 @@ import torch
 
 # preferred official package namespace
 from google import genai
-from google.genai.types import GenerateContentConfig, Modality, Part
+from google.genai.types import GenerateContentConfig, HarmBlockThreshold, HarmCategory, ImageConfig, Modality, Part, SafetySetting
 
 from .zen_image_list import ZEN_IMAGE_LIST
 
@@ -26,18 +26,75 @@ class ZenGeminiImageNode(io.ComfyNode):
             display_name="Zen Gemini Image",
             category="debug",
             inputs=[
-                io.String.Input("prompt", display_name="Prompt", multiline=True, placeholder="Describe the image generation/editing task."),
-                io.String.Input("model_name", display_name="Model Name", default="gemini-3.1-flash-image-preview"),
-                io.String.Input("api_key", display_name="API Key", placeholder="Enter your Gemini API key"),
-                io.Custom(ZEN_IMAGE_LIST).Input("image_list", display_name="image_list", optional=True),
+                io.String.Input(
+                    "prompt",
+                    display_name="Prompt",
+                    multiline=True,
+                    placeholder="Describe the image generation/editing task.",
+                ),
+                io.Combo.Input(
+                    "model_name",
+                    display_name="Model Name",
+                    options=[
+                        "gemini-3.1-flash-image-preview",
+                        "gemini-3-pro-image-preview",
+                    ],
+                    default="gemini-3.1-flash-image-preview",
+                    tooltip="Select the Gemini model to use",
+                ),
+                io.Combo.Input(
+                    "aspect_ratio",
+                    display_name="Aspect Ratio",
+                    options=[
+                        "1:1",
+                        "1:4",
+                        "1:8",
+                        "2:3",
+                        "3:2",
+                        "3:4",
+                        "4:1",
+                        "4:3",
+                        "4:5",
+                        "5:4",
+                        "8:1",
+                        "9:16",
+                        "16:9",
+                        "21:9",
+                    ],
+                    default="16:9",
+                    tooltip="Choose the desired aspect ratio for the generated image",
+                ),
+                io.Combo.Input(
+                    "resolution",
+                    display_name="Resolution",
+                    options=["1K", "2K", "4K"],
+                    default="1K",
+                    tooltip="Select the target resolution for the generated image",
+                ),
+                io.String.Input(
+                    "api_key",
+                    display_name="API Key",
+                    placeholder="Enter your Gemini API key",
+                ),
+                io.Custom(ZEN_IMAGE_LIST).Input(
+                    "image_list", display_name="image_list", optional=True
+                ),
             ],
-            outputs= [
+            outputs=[
                 io.Image.Output(display_name="IMAGE"),
             ],
         )
 
     @classmethod
-    def execute(cls, prompt: str, model_name: str, api_key: str, image_list: list | None = None):
+    def execute(
+        cls,
+        prompt: str,
+        model_name: str,
+        aspect_ratio: str,
+        resolution: str,
+        api_key: str,
+        image_list: list | None = None,
+    ):
         """
         所有图片平等参与生成
         """
@@ -46,7 +103,6 @@ class ZenGeminiImageNode(io.ComfyNode):
                 "google-genai (or google.genai) library not found. Install with: pip install google-genai"
             )
 
-        
         contents = [prompt]
         images = list(image_list) if image_list else []
 
@@ -60,10 +116,7 @@ class ZenGeminiImageNode(io.ComfyNode):
                     pil_img.save(buf, format="PNG")
 
                     contents.append(
-                        Part.from_bytes(
-                            data=buf.getvalue(),
-                            mime_type="image/png"
-                        )
+                        Part.from_bytes(data=buf.getvalue(), mime_type="image/png")
                     )
 
                 except Exception as e:
@@ -81,8 +134,20 @@ class ZenGeminiImageNode(io.ComfyNode):
         try:
             response = client.models.generate_content(
                 model=model_name,
+                config=GenerateContentConfig(
+                    response_modalities=[Modality.IMAGE],
+                    image_config= ImageConfig(
+                        aspect_ratio=aspect_ratio,
+                        image_size=resolution,
+                    ),
+                    safety_settings=[
+                        SafetySetting(
+                            category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                            threshold=HarmBlockThreshold.OFF,
+                        ),
+                    ]
+                ),
                 contents=contents,
-                config=GenerateContentConfig(response_modalities=[Modality.IMAGE])
             )
         except Exception as e:
             tb = traceback.format_exc()
@@ -100,7 +165,11 @@ class ZenGeminiImageNode(io.ComfyNode):
                         inline = getattr(part, "inline_data", None)
                         if inline is not None and getattr(inline, "data", None):
                             data_field = inline.data
-                            img_bytes = bytes(data_field) if isinstance(data_field, (bytes, bytearray)) else bytes(list(data_field))
+                            img_bytes = (
+                                bytes(data_field)
+                                if isinstance(data_field, (bytes, bytearray))
+                                else bytes(list(data_field))
+                            )
                             break
                     if img_bytes:
                         break
@@ -141,14 +210,15 @@ class ZenGeminiImageNode(io.ComfyNode):
             raise RuntimeError(f"Failed to open returned image bytes: {e}")
 
         out_tensor = cls._pil_to_tensor_channel_last(out_pil)
-        logger.info(f"Gemini generation successful, returning tensor shape: {out_tensor.shape}")
+        logger.info(
+            f"Gemini generation successful, returning tensor shape: {out_tensor.shape}"
+        )
 
         return io.NodeOutput(out_tensor)
-    
 
     # -----------------------
     # Utility converters
-    # -----------------------  
+    # -----------------------
     @classmethod
     def _to_pil(self, image):
         """将 ComfyUI 的 IMAGE（torch.Tensor / numpy.ndarray / PIL.Image）转换为 PIL.Image（RGB）。"""
@@ -210,7 +280,7 @@ class ZenGeminiImageNode(io.ComfyNode):
             return image.convert("RGB")
 
         raise TypeError(f"Unsupported image type: {type(image)}")
-    
+
     @classmethod
     def _pil_to_tensor_channel_last(self, pil_img):
         """
@@ -219,4 +289,3 @@ class ZenGeminiImageNode(io.ComfyNode):
         arr = np.array(pil_img.convert("RGB")).astype(np.float32) / 255.0  # H,W,3
         tensor = torch.from_numpy(arr).unsqueeze(0)  # 1,H,W,3
         return tensor
-

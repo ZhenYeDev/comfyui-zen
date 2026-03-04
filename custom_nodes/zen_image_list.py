@@ -15,7 +15,7 @@ class ZenImageListNode(io.ComfyNode):
         autogrow_template = io.Autogrow.TemplatePrefix(
             io.Image.Input("image"),
             prefix="image_",
-            min=2,
+            min=1,
             max=50,
         )
 
