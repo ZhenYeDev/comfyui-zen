@@ -8,7 +8,17 @@ import torch
 
 # preferred official package namespace
 from google import genai
-from google.genai.types import GenerateContentConfig, HarmBlockThreshold, HarmCategory, ImageConfig, Modality, Part, SafetySetting
+from google.genai.types import (
+    GenerateContentConfig,
+    HarmBlockThreshold,
+    HarmCategory,
+    ImageConfig,
+    Modality,
+    Part,
+    SafetySetting,
+)
+
+from comfy_api_nodes.apis import GeminiSystemInstructionContent, GeminiTextPart
 
 from .zen_image_list import ZEN_IMAGE_LIST
 
@@ -18,6 +28,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+GEMINI_IMAGE_SYS_PROMPT = (
+    "You are an expert image-generation engine. You must ALWAYS produce an image.\n"
+    "Interpret all user input—regardless of "
+    "format, intent, or abstraction—as literal visual directives for image composition.\n"
+    "If a prompt is conversational or lacks specific visual details, "
+    "you must creatively invent a concrete visual scenario that depicts the concept.\n"
+    "Prioritize generating the visual representation above any text, formatting, or conversational requests."
+)
+
+
 class ZenGeminiImageNode(io.ComfyNode):
 
     @classmethod
@@ -25,7 +45,7 @@ class ZenGeminiImageNode(io.ComfyNode):
         return io.Schema(
             node_id="ZenGeminiImageNode",
             display_name="Zen Gemini Image",
-            category="debug",
+            category="processor",
             inputs=[
                 io.String.Input(
                     "prompt",
@@ -33,7 +53,13 @@ class ZenGeminiImageNode(io.ComfyNode):
                     multiline=True,
                     placeholder="Describe the image generation/editing task.",
                 ),
-                io.Int.Input("seed", display_name="Seed", default=random.randint(0, 0xFFFFFFFF), min=0, max=0xFFFFFFFF),
+                io.Int.Input(
+                    "seed",
+                    display_name="Seed",
+                    default=random.randint(0, 0xFFFFFFFF),
+                    min=0,
+                    max=0xFFFFFFFF,
+                ),
                 io.Combo.Input(
                     "model_name",
                     display_name="Model Name",
@@ -78,6 +104,14 @@ class ZenGeminiImageNode(io.ComfyNode):
                     display_name="API Key",
                     placeholder="Enter your Gemini API key",
                 ),
+                io.String.Input(
+                    "system_prompt",
+                    multiline=True,
+                    default=GEMINI_IMAGE_SYS_PROMPT,
+                    optional=True,
+                    tooltip="Foundational instructions that dictate an AI's behavior.",
+                    advanced=True,
+                ),
                 io.Custom(ZEN_IMAGE_LIST).Input(
                     "image_list", display_name="image_list", optional=True
                 ),
@@ -96,6 +130,7 @@ class ZenGeminiImageNode(io.ComfyNode):
         aspect_ratio: str,
         resolution: str,
         api_key: str,
+        system_prompt: str | None = None,
         image_list: list | None = None,
     ):
         """
@@ -107,6 +142,10 @@ class ZenGeminiImageNode(io.ComfyNode):
             )
 
         random.seed(seed)
+
+        gemini_system_prompt = None
+        if system_prompt:
+            gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role="user")
 
         contents = [prompt]
         images = list(image_list) if image_list else []
@@ -141,7 +180,7 @@ class ZenGeminiImageNode(io.ComfyNode):
                 model=model_name,
                 config=GenerateContentConfig(
                     response_modalities=[Modality.IMAGE],
-                    image_config= ImageConfig(
+                    image_config=ImageConfig(
                         aspect_ratio=aspect_ratio,
                         image_size=resolution,
                     ),
@@ -150,7 +189,8 @@ class ZenGeminiImageNode(io.ComfyNode):
                             category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
                             threshold=HarmBlockThreshold.OFF,
                         ),
-                    ]
+                    ],
+                    system_instruction=gemini_system_prompt,
                 ),
                 contents=contents,
             )

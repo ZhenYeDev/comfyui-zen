@@ -9,7 +9,7 @@ class ZenTextMergeNode(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         autogrow_template = io.Autogrow.TemplatePrefix(
-            io.String.Input("STRING"),  # Input type
+            io.String.Input("string"),  # Input type
             prefix="string_",
             min=2,
             max=50,
