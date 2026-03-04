@@ -13,7 +13,7 @@ class ZenImageListNode(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         autogrow_template = io.Autogrow.TemplatePrefix(
-            io.Image.Input("IMAGE"),
+            io.Image.Input("image"),
             prefix="image_",
             min=2,
             max=50,
@@ -25,13 +25,6 @@ class ZenImageListNode(io.ComfyNode):
             category="image",
             inputs=[
                 io.Autogrow.Input("images", template=autogrow_template),
-                io.Int.Input(
-                    "seed",
-                    display_name="Seed",
-                    default=random.randint(0, 0xFFFFFFFF),
-                    min=0,
-                    max=0xFFFFFFFF,
-                ),
             ],
             outputs=[
                 io.Custom(ZEN_IMAGE_LIST).Output(display_name="IMAGE_LIST"),
@@ -39,8 +32,6 @@ class ZenImageListNode(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, images: dict, seed: int):
-        random.seed(seed)
-
+    def execute(cls, images: dict):
         image_list = [img for img in images.values() if img is not None]
         return io.NodeOutput(image_list)

@@ -26,10 +26,10 @@ class ZenGeminiImageNode(io.ComfyNode):
             display_name="Zen Gemini Image",
             category="debug",
             inputs=[
-                io.Custom(ZEN_IMAGE_LIST).Input("image_list", display_name="image_list", optional=True),
                 io.String.Input("prompt", display_name="Prompt", multiline=True, placeholder="Describe the image generation/editing task."),
                 io.String.Input("model_name", display_name="Model Name", default="gemini-3.1-flash-image-preview"),
                 io.String.Input("api_key", display_name="API Key", placeholder="Enter your Gemini API key"),
+                io.Custom(ZEN_IMAGE_LIST).Input("image_list", display_name="image_list", optional=True),
             ],
             outputs= [
                 io.Image.Output(display_name="IMAGE"),
