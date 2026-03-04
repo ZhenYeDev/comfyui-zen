@@ -1,4 +1,5 @@
 from comfy_api.latest import io
+import random
 import traceback
 from io import BytesIO
 from PIL import Image
@@ -32,6 +33,7 @@ class ZenGeminiImageNode(io.ComfyNode):
                     multiline=True,
                     placeholder="Describe the image generation/editing task.",
                 ),
+                io.Int.Input("seed", display_name="Seed", default=random.randint(0, 0xFFFFFFFF), min=0, max=0xFFFFFFFF),
                 io.Combo.Input(
                     "model_name",
                     display_name="Model Name",
@@ -89,6 +91,7 @@ class ZenGeminiImageNode(io.ComfyNode):
     def execute(
         cls,
         prompt: str,
+        seed: int,
         model_name: str,
         aspect_ratio: str,
         resolution: str,
@@ -102,6 +105,8 @@ class ZenGeminiImageNode(io.ComfyNode):
             raise RuntimeError(
                 "google-genai (or google.genai) library not found. Install with: pip install google-genai"
             )
+
+        random.seed(seed)
 
         contents = [prompt]
         images = list(image_list) if image_list else []

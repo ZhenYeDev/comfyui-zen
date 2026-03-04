@@ -30,13 +30,10 @@ class ZenTextMergeNode(io.ComfyNode):
 
     @classmethod
     def execute(cls, texts: io.Autogrow.Type, seed: int):
-        logger.info(f"Received texts: {texts}")
         random.seed(seed)
         # texts behaves like a dict
         keys = list(texts.keys()) 
         merged = "\n".join(texts[key] for key in keys)
-
-        logger.info(f"Merged text: {merged}")
 
         # ✅ return plain Python str, NOT io.String.Output
         return io.NodeOutput(merged.strip())
